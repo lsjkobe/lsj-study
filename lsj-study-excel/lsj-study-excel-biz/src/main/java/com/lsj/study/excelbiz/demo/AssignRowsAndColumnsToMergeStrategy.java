@@ -18,11 +18,14 @@ public class AssignRowsAndColumnsToMergeStrategy  extends AbstractMergeStrategy 
     // 合并坐标集合
     private List<CellRangeAddress> cellRangeAddresses;
 
+    private int startRowIndex;
+
     // 构造
     public AssignRowsAndColumnsToMergeStrategy() {
     }
 
-    public AssignRowsAndColumnsToMergeStrategy(List<CellRangeAddress> cellRangeAddresses) {
+    public AssignRowsAndColumnsToMergeStrategy(int startRowIndex,List<CellRangeAddress> cellRangeAddresses) {
+        this.startRowIndex = startRowIndex;
         this.cellRangeAddresses = cellRangeAddresses;
     }
 
@@ -45,7 +48,7 @@ public class AssignRowsAndColumnsToMergeStrategy  extends AbstractMergeStrategy 
          * 由于此处的表头占了两行，因此数据单元格是从(2, 0)开始的，所以就对这个单元格(cell.getRowIndex() == 2 && cell.getColumnIndex() == 0)
          * 添加一次合并策略就可以了。如果表头只有一行，则判断条件改为「cell.getRowIndex() == 1 && cell.getColumnIndex() == 0」就可以了。
          */
-        if (cell.getRowIndex() == 2 && cell.getColumnIndex() == 0) {
+        if (cell.getRowIndex() == startRowIndex && cell.getColumnIndex() == 0) {
             for (CellRangeAddress item : cellRangeAddresses) {
                 sheet.addMergedRegion(item);
             }

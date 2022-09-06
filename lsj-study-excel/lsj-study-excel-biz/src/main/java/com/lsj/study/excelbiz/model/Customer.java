@@ -28,7 +28,7 @@ public class Customer implements Serializable {
 
     private String branch;
 
-    private String recentShipments;
+    private Integer recentShipments;
 
     private String recentBubbleRatio;
 

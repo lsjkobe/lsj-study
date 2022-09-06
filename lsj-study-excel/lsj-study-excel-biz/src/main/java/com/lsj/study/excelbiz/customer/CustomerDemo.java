@@ -1,6 +1,7 @@
 package com.lsj.study.excelbiz.customer;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.write.style.row.SimpleRowHeightStyleStrategy;
 import com.google.gson.Gson;
 import com.lsj.study.excelbiz.demo.AssignRowsAndColumnsToMergeStrategy;
 import com.lsj.study.excelbiz.model.Customer;
@@ -34,7 +35,9 @@ public class CustomerDemo {
         log.info("");
         EasyExcel.write(fileName)
                 .head(CustomerExcel.class)
-                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(cellRangeAddressList))
+                .registerWriteHandler(new SimpleRowHeightStyleStrategy((short) 20, (short) 17))
+                .registerWriteHandler(new HeadCellStyleStrategy())
+                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(2, cellRangeAddressList))
                 .sheet("模板")
                 .doWrite(customerExcelList);
     }
@@ -42,9 +45,10 @@ public class CustomerDemo {
     /**
      * excel导出有三层结构，一（客户）二层（产品）都需要分别合并，三层不需合并（具体的详情）
      * 转为excel导出需要的数据.
-     * @param startRowCount 开始的行号
-     * @param customerList 客户对象列表
-     * @param customerExcelList 返回的excel对象列表
+     *
+     * @param startRowCount        开始的行号
+     * @param customerList         客户对象列表
+     * @param customerExcelList    返回的excel对象列表
      * @param cellRangeAddressList 合并的对象列表
      */
     private static void toExcelData(int startRowCount, List<Customer> customerList,
@@ -93,9 +97,10 @@ public class CustomerDemo {
 
     /**
      * 创建合并对象.
+     *
      * @param mergeColSegment 合并的列范围.
-     * @param startRow 开始行号.
-     * @param rowCount 合并的行数.
+     * @param startRow        开始行号.
+     * @param rowCount        合并的行数.
      * @return .
      */
     private static List<CellRangeAddress> genCellRangeAddress(int[] mergeColSegment, int startRow, int rowCount) {
@@ -115,8 +120,9 @@ public class CustomerDemo {
 
     /**
      * 创建excel对象.
-     * @param customer 客户信息.
-     * @param product 客户产品信息.
+     *
+     * @param customer      客户信息.
+     * @param product       客户产品信息.
      * @param productDetail 产品详情.
      * @return .
      */
@@ -142,6 +148,8 @@ public class CustomerDemo {
         customerExcel.setExpressShipping(productDetail.getExpressShipping());
         customerExcel.setRegistrationFee(productDetail.getRegistrationFee());
         customerExcel.setValidityPeriod(productDetail.getValidityPeriod());
+        customerExcel.setApplyExpressShipping(productDetail.getApplyExpressShipping());
+        customerExcel.setApplyRegistrationFee(productDetail.getApplyRegistrationFee());
         customerExcel.setComparativeExpressShipping(productDetail.getComparativeExpressShipping());
         customerExcel.setComparativeRegistrationFee(productDetail.getComparativeRegistrationFee());
         customerExcel.setCommitmentDailyVolume(productDetail.getCommitmentDailyVolume());
@@ -162,7 +170,7 @@ public class CustomerDemo {
                     .applicationTime(new Date().toString())
                     .fsSales("lsj")
                     .level("1")
-                    .recentShipments(String.valueOf(random.nextInt(30)))
+                    .recentShipments(random.nextInt(30))
                     .recentBubbleRatio(String.valueOf(random.nextInt(30)))
                     .priceType("1");
             List<Product> productList = new ArrayList<>();

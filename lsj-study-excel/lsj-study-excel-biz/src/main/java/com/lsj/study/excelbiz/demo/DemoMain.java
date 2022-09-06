@@ -36,7 +36,7 @@ public class DemoMain {
 
         EasyExcel.write(fileName)
                 .head(header())
-                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(list))
+                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(2, list))
                 .sheet("模板")
                 .doWrite(data());
     }
