@@ -1,6 +1,7 @@
 package com.lsj.study.excelbiz.customer;
 
 import com.alibaba.excel.EasyExcel;
+import com.google.gson.Gson;
 import com.lsj.study.excelbiz.demo.AssignRowsAndColumnsToMergeStrategy;
 import com.lsj.study.excelbiz.model.Customer;
 import com.lsj.study.excelbiz.model.CustomerExcel;
@@ -21,10 +22,12 @@ import java.util.*;
 @Slf4j
 public class CustomerDemo {
 
-    private static String fileName = "E:\\tmp\\excel/lsjtest/" + System.currentTimeMillis() + ".xlsx";
+    private static String fileName = "F:\\tmp\\excel/lsjtest/" + System.currentTimeMillis() + ".xlsx";
 
     public static void main(String[] args) {
         List<Customer> customerList = initData();
+        Gson gson = new Gson();
+        log.info("初始化数据：{}", gson.toJson(customerList));
         List<CustomerExcel> customerExcelList = new ArrayList<>();
         List<CellRangeAddress> cellRangeAddressList = new ArrayList<>();
         toExcelData(2, customerList, customerExcelList, cellRangeAddressList);
@@ -37,6 +40,7 @@ public class CustomerDemo {
     }
 
     /**
+     * excel导出有三层结构，一（客户）二层（产品）都需要分别合并，三层不需合并（具体的详情）
      * 转为excel导出需要的数据.
      * @param startRowCount 开始的行号
      * @param customerList 客户对象列表
@@ -45,34 +49,44 @@ public class CustomerDemo {
      */
     private static void toExcelData(int startRowCount, List<Customer> customerList,
                                     List<CustomerExcel> customerExcelList, List<CellRangeAddress> cellRangeAddressList) {
-        //一级合并字段的列范围
+        //一层合并字段的列范围，1-9列
         int[] customerMergeColSegment = {0, 8};
-        //二级合并字段的列范围
+        //二级合并字段的列范围，10-11列
         int[] productMergeColSegment = {9, 10};
+        //定义当前行数
         int curStartRow = startRowCount;
+        //遍历客户信息列表
         for (Customer customer : customerList) {
+            //重置当前客户的行数
             int customerRowCount = 0;
             int curProductStartRow = curStartRow;
             if (CollectionUtils.isEmpty(customer.getProductList())) {
                 continue;
             }
+            //遍历客户下产品列表
             for (Product product : customer.getProductList()) {
                 int productRowCount;
                 if (CollectionUtils.isEmpty(product.getProductDetailList())) {
                     continue;
                 }
+                //遍历产品下的具体详情列表
                 for (ProductDetail productDetail : product.getProductDetailList()) {
                     CustomerExcel customerExcel = toCustomerExcel(customer, product, productDetail);
                     customerExcelList.add(customerExcel);
                 }
                 productRowCount = product.getProductDetailList().size();
+                //构造二层（产品）合并的合并对象
                 List<CellRangeAddress> productCellRangeAddressList = genCellRangeAddress(productMergeColSegment, curProductStartRow, productRowCount);
                 cellRangeAddressList.addAll(productCellRangeAddressList);
+                //当前产品开始行数+产品占的行数=下一产品开始行数
                 curProductStartRow = curProductStartRow + productRowCount;
+                //当前客户所占行数=每个产品的产品详情数量累加
                 customerRowCount += product.getProductDetailList().size();
             }
+            //构造一层（客户）合并的合并对象
             List<CellRangeAddress> customerCellRangeAddressList = genCellRangeAddress(customerMergeColSegment, curStartRow, customerRowCount);
             cellRangeAddressList.addAll(customerCellRangeAddressList);
+            //当前客户开始行数+当前客户占的行数=下一客户开始行数
             curStartRow = curStartRow + customerRowCount;
         }
     }
@@ -86,12 +100,14 @@ public class CustomerDemo {
      */
     private static List<CellRangeAddress> genCellRangeAddress(int[] mergeColSegment, int startRow, int rowCount) {
         List<CellRangeAddress> cellRangeAddressList = new ArrayList<>();
-        for (int j = mergeColSegment[0]; j <= mergeColSegment[1]; j++) {
+        //参数定义了当前层级需要合并的列范围，比如当前一层1-9列需要合并，二层10-11需要合并
+        for (int i = mergeColSegment[0]; i <= mergeColSegment[1]; i++) {
             int endRow = startRow + rowCount - 1;
+            //只有开始行小于结束行才需要创建合并（等于相当于只有一行，也不需要合并）
             if (startRow >= endRow) {
                 continue;
             }
-            CellRangeAddress cellRangeAddress = new CellRangeAddress(startRow, endRow, j, j);
+            CellRangeAddress cellRangeAddress = new CellRangeAddress(startRow, endRow, i, i);
             cellRangeAddressList.add(cellRangeAddress);
         }
         return cellRangeAddressList;
@@ -146,6 +162,8 @@ public class CustomerDemo {
                     .applicationTime(new Date().toString())
                     .fsSales("lsj")
                     .level("1")
+                    .recentShipments(String.valueOf(random.nextInt(30)))
+                    .recentBubbleRatio(String.valueOf(random.nextInt(30)))
                     .priceType("1");
             List<Product> productList = new ArrayList<>();
             customerBuilder.productList(productList);
