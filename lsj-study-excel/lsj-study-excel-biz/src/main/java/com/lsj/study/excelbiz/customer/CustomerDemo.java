@@ -26,18 +26,19 @@ public class CustomerDemo {
     private static String fileName = "F:\\tmp\\excel/lsjtest/" + System.currentTimeMillis() + ".xlsx";
 
     public static void main(String[] args) {
-        List<Customer> customerList = initData();
+        List<Customer> customerList = initData2();
         Gson gson = new Gson();
         log.info("初始化数据：{}", gson.toJson(customerList));
         List<CustomerExcel> customerExcelList = new ArrayList<>();
         List<CellRangeAddress> cellRangeAddressList = new ArrayList<>();
-        toExcelData(2, customerList, customerExcelList, cellRangeAddressList);
+        int startRow = 2;
+        toExcelData(startRow, customerList, customerExcelList, cellRangeAddressList);
         log.info("");
         EasyExcel.write(fileName)
                 .head(CustomerExcel.class)
                 .registerWriteHandler(new SimpleRowHeightStyleStrategy((short) 20, (short) 17))
                 .registerWriteHandler(new HeadCellStyleStrategy())
-                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(2, cellRangeAddressList))
+                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(startRow, cellRangeAddressList))
                 .sheet("模板")
                 .doWrite(customerExcelList);
     }
@@ -157,6 +158,97 @@ public class CustomerDemo {
         return customerExcel;
     }
 
+    private static List<Customer> initData2() {
+        List<Customer> customerList = new ArrayList<>();
+        Customer customer1 = genCustomer1("张三", "QWE121");
+        Customer customer2 = genCustomer2("李四", "QW321");
+        customerList.add(customer1);
+        customerList.add(customer2);
+        return customerList;
+    }
+
+    private static Customer genCustomer1(String name, String code) {
+        List<Product> productList = new ArrayList<>();
+        productList.add(genProduct1());
+        productList.add(genProduct2());
+        return Customer.builder()
+                .name(name)
+                .code(code)
+                .level("大型客户")
+                .fsSales("王五")
+                .branch("广州分公司")
+                .recentShipments(300)
+                .recentBubbleRatio("1.2")
+                .priceType("等级价1档")
+                .applicationTime("30天")
+                .productList(productList)
+                .build();
+    }
+
+    private static Customer genCustomer2(String name, String code) {
+        List<Product> productList = new ArrayList<>();
+        productList.add(genProduct1());
+        productList.add(genProduct2());
+        return Customer.builder()
+                .name(name)
+                .code(code)
+                .level("大型客户")
+                .fsSales("王五")
+                .branch("广州分公司")
+                .recentShipments(300)
+                .recentBubbleRatio("1.2")
+                .priceType("等级价1档")
+                .applicationTime("30天")
+                .productList(productList)
+                .build();
+    }
+
+    private static Product genProduct1() {
+        List<ProductDetail> productDetailList = new ArrayList<>();
+        productDetailList.add(genProductDetail("0-100G", "美国", 45, 50));
+        productDetailList.add(genProductDetail("101-200G", "美国", 46, 150));
+        productDetailList.add(genProductDetail("201-450G", "美国", 47, 250));
+        productDetailList.add(genProductDetail("451-700G", "美国", 48, 550));
+        return Product.builder()
+                .name("联邮通经济挂号-普货")
+                .salesArea("华南")
+                .productDetailList(productDetailList)
+                .build();
+    }
+
+    private static Product genProduct2() {
+        List<ProductDetail> productDetailList = new ArrayList<>();
+        productDetailList.add(genProductDetail("701-1000G", "美国", 49, 850));
+        productDetailList.add(genProductDetail("1001-3000G", "美国", 50, 1550));
+        productDetailList.add(genProductDetail("0-100G", "英国", 51, 850));
+        productDetailList.add(genProductDetail("101-200G", "英国", 52, 1550));
+        return Product.builder()
+                .name("联邮通经济挂号-带电")
+                .salesArea("华南")
+                .productDetailList(productDetailList)
+                .build();
+    }
+
+
+    private static ProductDetail genProductDetail(String weightSegment, String country, int commitmentDailyVolume, int averageTicketWeight) {
+        return ProductDetail.builder()
+                .country(country)
+                .weightSegment(weightSegment)
+                .publishedExpressShipping("66")
+                .publishedRegistrationFee("14")
+                .expressShipping("65")
+                .registrationFee("13")
+                .validityPeriod("2020-09-09—2020-09-10")
+                .applyExpressShipping("66")
+                .applyRegistrationFee("14")
+                .comparativeExpressShipping("下降1元")
+                .comparativeRegistrationFee("下降1元")
+                .commitmentDailyVolume(commitmentDailyVolume)
+                .averageTicketWeight(averageTicketWeight)
+                .build();
+    }
+
+
     private static List<Customer> initData() {
         String comontStr = "lsj";
         String productNameStr = "产品";
@@ -199,8 +291,8 @@ public class CustomerDemo {
                             .applyRegistrationFee("14")
                             .comparativeExpressShipping("下降1元")
                             .comparativeRegistrationFee("下降1元")
-                            .commitmentDailyVolume("100")
-                            .averageTicketWeight("50")
+                            .commitmentDailyVolume(100)
+                            .averageTicketWeight(50)
                             .build();
                     productDetailList.add(productDetail);
                 }

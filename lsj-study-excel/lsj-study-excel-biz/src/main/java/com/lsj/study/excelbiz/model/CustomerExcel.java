@@ -105,9 +105,9 @@ public class CustomerExcel {
 
     @ColumnWidth(16)
     @ExcelProperty(value = "承诺日均货量(票)")
-    private String commitmentDailyVolume;
+    private Integer commitmentDailyVolume;
 
     @ColumnWidth(16)
     @ExcelProperty(value = "票均重量(克)")
-    private String averageTicketWeight;
+    private Integer averageTicketWeight;
 }

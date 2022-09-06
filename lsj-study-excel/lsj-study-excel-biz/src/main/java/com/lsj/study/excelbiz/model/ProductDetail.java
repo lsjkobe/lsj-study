@@ -36,7 +36,7 @@ public class ProductDetail implements Serializable {
 
     private String comparativeRegistrationFee;
 
-    private String commitmentDailyVolume;
+    private Integer commitmentDailyVolume;
 
-    private String averageTicketWeight;
+    private Integer averageTicketWeight;
 }
