@@ -18,11 +18,11 @@ public class DemoMain {
     private static String fileName = "E:\\tmp\\excel/lsjtest/" + System.currentTimeMillis() + ".xlsx";
 
     public static void main(String[] args) {
-        EasyExcel.write(fileName)
-                .head(header())
-                .registerWriteHandler(new ExcelMergeHandler(2, new int[]{0, 1, 2, 3, 5, 8, 9}))
-                .sheet("Sheet1")
-                .doWrite(data());
+//        EasyExcel.write(fileName)
+//                .head(header())
+//                .registerWriteHandler(new ExcelMergeHandler(2, new int[]{0, 1, 2, 3, 5, 8, 9}))
+//                .sheet("Sheet1")
+//                .doWrite(data());
 
         // 合并策略：指定要合并的行列范围
         int[][] toMergeRows = {{2, 3}, {4, 6}};
