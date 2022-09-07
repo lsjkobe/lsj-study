@@ -48,6 +48,11 @@ public class ExcelMergeHandler implements CellWriteHandler {
     public void afterCellCreate(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, Cell cell, Head head, Integer integer, Boolean aBoolean) {
 
     }
+//
+//    @Override
+//    public void afterCellDataConverted(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, CellData cellData, Cell cell, Head head, Integer integer, Boolean aBoolean) {
+//
+//    }
 
 
     @Override

@@ -2,7 +2,6 @@ package com.lsj.study.excelbiz.demo;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
-import com.alibaba.excel.enums.WriteDirectionEnum;
 import com.alibaba.excel.util.DateUtils;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
@@ -28,14 +27,24 @@ public class DemoFillMain {
     // 方案1 根据对象填充
     static String fileName = "F:\\tmp\\excel/lsjtest/fill/" + System.currentTimeMillis() + ".xlsx";
 
+    /**
+     * 产品sheet的模板位置.
+     */
+    private static final int PRODUCT_TEMP_SHEET_INDEX = 1;
+
+    /**
+     * 动态添加的sheet的开始位置(该值与动态生成的产品sheet数据填充关联，如果修改做好测试).
+     */
+    private static final int PRODUCT_SHEET_START_INDEX = 2;
+
     public static void main(String[] args) throws IOException {
         // 模板注意 用{} 来表示你要用的变量 如果本来就有"{","}" 特殊字符 用"\{","\}"代替
-        String templateFileName = "H:\\lsj\\workspace\\lsj\\lsj-study\\lsj-study-excel\\lsj-study-excel-biz\\src\\main\\resources\\temp\\excel/联邮通报价模板-2.xlsx";
+        String templateFileName = "H:\\lsj\\workspace\\lsj\\lsj-study\\lsj-study-excel\\lsj-study-excel-biz\\src\\main\\resources\\temp\\excel/联邮通报价模板.xlsx";
         QuoteDownloadExcel quoteDownloadExcel = initData();
-        List<QuoteProductExcel> quoteProductExcelList = initData2();
-        ExcelWriter excelWriter = buildExcelWriter(new FileInputStream(templateFileName), quoteProductExcelList);
-        fillBaseSheet(excelWriter, quoteDownloadExcel, quoteProductExcelList);
-        fillDynamicProductSheet(excelWriter, quoteProductExcelList);
+        quoteDownloadExcel.setVatRateIndex(quoteDownloadExcel.getQuoteProductExcelList().size() + 1);
+        ExcelWriter excelWriter = buildExcelWriter(new FileInputStream(templateFileName), quoteDownloadExcel.getQuoteProductExcelList());
+        fillBaseSheet(excelWriter, quoteDownloadExcel);
+        fillDynamicProductSheet(excelWriter, quoteDownloadExcel.getQuoteProductExcelList());
         excelWriter.finish();
     }
 
@@ -43,12 +52,15 @@ public class DemoFillMain {
         ExcelWriter excelWriter;
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             XSSFWorkbook workbook = new XSSFWorkbook(sourceIs);
+            //隐藏模板
+            workbook.setSheetHidden(PRODUCT_TEMP_SHEET_INDEX, Boolean.TRUE);
             for (int i = 0; i < productExcelList.size(); i++) {
                 QuoteProductExcel productExcel = productExcelList.get(i);
                 String sheetName = genSheetName(productExcel);
                 //复制隐藏的sheet
                 workbook.cloneSheet(1, sheetName);
-                workbook.setSheetOrder(sheetName, i + 2);
+                //调整动态添加的sheet的开始位置
+                workbook.setSheetOrder(sheetName, i + PRODUCT_SHEET_START_INDEX);
             }
             //写到流里
             workbook.write(bos);
@@ -59,38 +71,57 @@ public class DemoFillMain {
         return excelWriter;
     }
 
-    private static void fillBaseSheet(ExcelWriter excelWriter, QuoteDownloadExcel quoteDownloadExcel, List<QuoteProductExcel> quoteProductExcelList) {
+    /**
+     * 填充基础数据（第一个sheet）
+     * @param excelWriter .
+     * @param quoteDownloadExcel .
+     */
+    private static void fillBaseSheet(ExcelWriter excelWriter, QuoteDownloadExcel quoteDownloadExcel) {
         WriteSheet writeSheet = EasyExcel.writerSheet("价格表目录").build();
         excelWriter.fill(quoteDownloadExcel, writeSheet);
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
-        excelWriter.fill(quoteProductExcelList, fillConfig, writeSheet);
+        excelWriter.fill(quoteDownloadExcel.getQuoteProductExcelList(), fillConfig, writeSheet);
     }
 
+    /**
+     * 填充动态产品sheet数据.
+     * @param excelWriter .
+     * @param quoteProductExcelList .
+     */
     private static void fillDynamicProductSheet(ExcelWriter excelWriter, List<QuoteProductExcel> quoteProductExcelList) {
-        for (QuoteProductExcel productExcel : quoteProductExcelList) {
-            String sheetName = genSheetName(productExcel);
-            WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
+        for (int i = 0; i < quoteProductExcelList.size(); i++) {
+            QuoteProductExcel productExcel = quoteProductExcelList.get(i);
+            WriteSheet writeSheet = EasyExcel.writerSheet(i + PRODUCT_SHEET_START_INDEX).build();
             excelWriter.fill(productExcel, writeSheet);
         }
-    }
-
-    private static QuoteDownloadExcel initData() {
-        // 这里 会填充到第一个sheet， 然后文件流会自动关闭
-        QuoteDownloadExcel quoteDownloadExcel = new QuoteDownloadExcel();
-        quoteDownloadExcel.setCustomerName("lsj");
-        quoteDownloadExcel.setSalesPhoneNumber("123456789");
-        quoteDownloadExcel.setQuoteDate(DateUtils.format(new Date(), "yyyy年MM月dd日"));
-        return quoteDownloadExcel;
     }
 
     private static String genSheetName(QuoteProductExcel productExcel) {
         return MessageFormat.format("{0}（{1}）", productExcel.getName(), productExcel.getCode());
     }
 
+    private static QuoteDownloadExcel initData() {
+        // 这里会填充到第一个sheet， 然后文件流会自动关闭
+        QuoteDownloadExcel quoteDownloadExcel = new QuoteDownloadExcel();
+        quoteDownloadExcel.setCustomerName("lsj");
+        quoteDownloadExcel.setSalesPhoneNumber("123456789");
+        quoteDownloadExcel.setQuoteDate(DateUtils.format(new Date(), "yyyy年MM月dd日"));
+        List<QuoteProductExcel> quoteProductExcelList = initData2();
+        quoteDownloadExcel.setQuoteProductExcelList(quoteProductExcelList);
+        return quoteDownloadExcel;
+    }
+
     private static List<QuoteProductExcel> initData2() {
         List<QuoteProductExcel> quotes = new ArrayList<>();
         quotes.add(genQuoteProductExcel(1));
         quotes.add(genQuoteProductExcel(2));
+        quotes.add(genQuoteProductExcel(3));
+        quotes.add(genQuoteProductExcel(4));
+        quotes.add(genQuoteProductExcel(5));
+        quotes.add(genQuoteProductExcel(6));
+        quotes.add(genQuoteProductExcel(7));
+        quotes.add(genQuoteProductExcel(8));
+        quotes.add(genQuoteProductExcel(9));
         return quotes;
     }
 
