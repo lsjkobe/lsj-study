@@ -1,8 +1,5 @@
 package com.lsj.study.excelbiz.model.excel;
-
 import lombok.Data;
-
-import java.util.List;
 
 /**
  * QuoteProductExcel
@@ -11,17 +8,37 @@ import java.util.List;
  * @date 2022/9/6 15:37
  */
 @Data
-public class OfferProductDetailExcelDownloadDTO {
+public class OfferProductDetailDownloadExcel {
 
     /**
-     * 国家/地区.
+     * 序号.
+     */
+    private Integer index;
+
+    /**
+     * 国家.
      */
     private String country;
 
     /**
+     * 重量段.
+     */
+    private String weightSegment;
+
+    /**
+     * 运费.
+     */
+    private String expressFreight;
+
+    /**
+     * 挂号费.
+     */
+    private String registrationFee;
+
+    /**
      * 尺寸限制.
      */
-    private String sizeLimit;
+        private String sizeLimit;
 
     /**
      * 时效.
@@ -32,9 +49,4 @@ public class OfferProductDetailExcelDownloadDTO {
      * 产品备注.
      */
     private String productRemark;
-
-    /**
-     * 重量段详情.
-     */
-    private List<OfferWeightSegmentExcelDownloadDTO> weightSegmentList;
 }

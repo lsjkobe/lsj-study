@@ -51,5 +51,5 @@ public class OfferProductDownloadExcelDTO {
     /**
      * 产品详情.
      */
-    private List<OfferProductDetailExcelDownloadDTO> productDetailList;
+    private List<OfferProductDetailDownloadExcelDTO> productDetailList;
 }

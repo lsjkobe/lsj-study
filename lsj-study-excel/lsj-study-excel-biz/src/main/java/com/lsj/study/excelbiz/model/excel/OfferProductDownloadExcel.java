@@ -1,6 +1,5 @@
 package com.lsj.study.excelbiz.model.excel;
 
-import com.lsj.study.excelbiz.model.quote.QuoteProductDetailExcel;
 import lombok.Data;
 
 import java.util.List;
@@ -56,5 +55,5 @@ public class OfferProductDownloadExcel {
     /**
      * 产品详情.
      */
-    private List<QuoteProductDetailExcel> productDetailList;
+    private List<OfferProductDetailDownloadExcel> productDetailList;
 }

@@ -6,14 +6,15 @@ import com.alibaba.excel.util.DateUtils;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.google.gson.Gson;
-import com.lsj.study.excelbiz.model.excel.OfferDownloadExcel;
-import com.lsj.study.excelbiz.model.excel.OfferDownloadExcelDTO;
-import com.lsj.study.excelbiz.model.excel.OfferProductDownloadExcel;
+import com.lsj.study.excelbiz.demo.AssignRowsAndColumnsToMergeStrategy;
+import com.lsj.study.excelbiz.model.excel.*;
 import com.lsj.study.excelbiz.utils.BeanCopierUtil;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -38,6 +39,11 @@ public class OfferDownloadDemo {
      */
     private static final int PRODUCT_SHEET_START_INDEX = 2;
 
+    /**
+     * 产品详情列表开始行数
+     */
+    private static final int PRODUCT_ROW_START_INDEX = 5;
+
     // 方案1 根据对象填充
     static String fileName = "F:\\tmp\\excel/lsjtest/fill/" + System.currentTimeMillis() + ".xlsx";
 
@@ -55,7 +61,7 @@ public class OfferDownloadDemo {
         //构建excel的writer
         ExcelWriter excelWriter = buildExcelWriter(new FileInputStream(PATH_DOWNLOAD_TEMP_PATH), offerProductDownloadExcelList);
         fillBaseSheetData(excelWriter, offerDownloadExcel, offerProductDownloadExcelList);
-        fillDynamicProductSheetData(excelWriter, offerProductDownloadExcelList);
+        fillDynamicProductSheetData(excelWriter, offerDownloadExcelDTO.getProductList());
         excelWriter.finish();
     }
 
@@ -108,21 +114,96 @@ public class OfferDownloadDemo {
     /**
      * 填充动态产品sheet数据.
      *
-     * @param excelWriter              .
-     * @param productDownloadExcelList .
+     * @param excelWriter                 .
+     * @param productDownloadExcelDTOList .
      */
-    private static void fillDynamicProductSheetData(ExcelWriter excelWriter, List<OfferProductDownloadExcel> productDownloadExcelList) {
-        for (int i = 0; i < productDownloadExcelList.size(); i++) {
-            OfferProductDownloadExcel productExcel = productDownloadExcelList.get(i);
-            WriteSheet writeSheet = EasyExcel.writerSheet(i + PRODUCT_SHEET_START_INDEX).build();
-            excelWriter.fill(productExcel, writeSheet);
+    private static void fillDynamicProductSheetData(ExcelWriter excelWriter, List<OfferProductDownloadExcelDTO> productDownloadExcelDTOList) {
+        for (int i = 0; i < productDownloadExcelDTOList.size(); i++) {
+            OfferProductDownloadExcelDTO productExcelDTO = productDownloadExcelDTOList.get(i);
+            List<OfferProductDetailDownloadExcel> productDetailDownloadExcelList = new ArrayList<>();
+            List<CellRangeAddress> cellRangeAddressList = new ArrayList<>();
+            genOfferProductDownloadExcel(productExcelDTO, productDetailDownloadExcelList, cellRangeAddressList);
+            WriteSheet writeSheet = EasyExcel
+                    .writerSheet(i + PRODUCT_SHEET_START_INDEX)
+                    .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(PRODUCT_ROW_START_INDEX, cellRangeAddressList))
+                    .build();
+            excelWriter.fill(productExcelDTO, writeSheet);
             FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
-            excelWriter.fill(productExcel.getProductDetailList(), fillConfig, writeSheet);
+            excelWriter.fill(productDetailDownloadExcelList, fillConfig, writeSheet);
         }
+    }
+
+    private static void genOfferProductDownloadExcel(OfferProductDownloadExcelDTO productExcelDTO,
+                                                     List<OfferProductDetailDownloadExcel> productDetailDownloadExcelList,
+                                                     List<CellRangeAddress> cellRangeAddressList) {
+        //一层合并字段的列
+        int[] mergeColIndex = {0, 1, 5, 6, 7};
+        //定义当前行数
+        int curStartRow = PRODUCT_ROW_START_INDEX - 1;
+        List<OfferProductDetailDownloadExcelDTO> productDetailList = productExcelDTO.getProductDetailList();
+        //每块详情（国家/地区）占的行数
+        int detailRowCount;
+        for (int i = 0; i < productDetailList.size(); i++) {
+            OfferProductDetailDownloadExcelDTO productDetail = productDetailList.get(i);
+            //所占行数就是重量段的数量
+            detailRowCount = productDetail.getWeightSegmentList().size();
+            for (int j = 0; j < productDetail.getWeightSegmentList().size(); j++) {
+                OfferWeightSegmentDownloadExcelDTO weightSegment = productDetail.getWeightSegmentList().get(j);
+                OfferProductDetailDownloadExcel offerProductDetailDownloadExcel = genQuoteProductDetailExcel(i, productDetail, weightSegment);
+                productDetailDownloadExcelList.add(offerProductDetailDownloadExcel);
+            }
+            cellRangeAddressList.addAll(genCellRangeAddress(mergeColIndex, curStartRow, detailRowCount));
+            //当前开始行数+每块详情（国家/地区）占的行数=下一开始行数
+            curStartRow = curStartRow + detailRowCount;
+        }
+    }
+
+    /**
+     * 构造OfferProductDetailDownloadExcel对象.
+     * @param index 序号.
+     * @param productDetail 产品详情.
+     * @param weightSegment 重量段信息.
+     * @return .
+     */
+    private static OfferProductDetailDownloadExcel genQuoteProductDetailExcel(int index, OfferProductDetailDownloadExcelDTO productDetail,
+                                                                              OfferWeightSegmentDownloadExcelDTO weightSegment) {
+        OfferProductDetailDownloadExcel detailDownloadExcel = new OfferProductDetailDownloadExcel();
+        detailDownloadExcel.setIndex(index);
+        detailDownloadExcel.setCountry(productDetail.getCountry());
+        detailDownloadExcel.setTimely(productDetail.getTimely());
+        detailDownloadExcel.setProductRemark(productDetail.getProductRemark());
+        detailDownloadExcel.setSizeLimit(productDetail.getSizeLimit());
+
+        detailDownloadExcel.setWeightSegment(weightSegment.getWeightSegment());
+        detailDownloadExcel.setExpressFreight(weightSegment.getExpressFreight());
+        detailDownloadExcel.setRegistrationFee(weightSegment.getRegistrationFee());
+        return detailDownloadExcel;
     }
 
     private static List<OfferProductDownloadExcel> getOfferProductDownloadExcel(OfferDownloadExcelDTO offerDownloadExcelDTO) {
         return BeanCopierUtil.toNewObjects(offerDownloadExcelDTO.getProductList(), OfferProductDownloadExcel.class);
+    }
+
+    /**
+     * 创建合并对象.
+     *
+     * @param mergeColIndex 合并的列index.
+     * @param startRow      开始行号.
+     * @param rowCount      合并的行数.
+     * @return .
+     */
+    private static List<CellRangeAddress> genCellRangeAddress(int[] mergeColIndex, int startRow, int rowCount) {
+        List<CellRangeAddress> cellRangeAddressList = new ArrayList<>();
+        for (int colIndex : mergeColIndex) {
+            int endRow = startRow + rowCount - 1;
+            //只有开始行小于结束行才需要创建合并（等于相当于只有一行，也不需要合并）
+            if (startRow >= endRow) {
+                continue;
+            }
+            CellRangeAddress cellRangeAddress = new CellRangeAddress(startRow, endRow, colIndex, colIndex);
+            cellRangeAddressList.add(cellRangeAddress);
+        }
+        return cellRangeAddressList;
     }
 
     private static OfferDownloadExcel getOfferDownloadExcel(OfferDownloadExcelDTO offerDownloadExcelDTO) {

@@ -9,7 +9,7 @@ import lombok.Data;
  * @date 2022/9/6 15:37
  */
 @Data
-public class OfferWeightSegmentExcelDownloadDTO {
+public class OfferWeightSegmentDownloadExcelDTO {
 
     /**
      * 重量段.

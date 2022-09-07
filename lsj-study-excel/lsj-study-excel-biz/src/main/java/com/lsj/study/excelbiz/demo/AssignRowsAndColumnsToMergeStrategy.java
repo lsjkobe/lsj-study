@@ -53,13 +53,5 @@ public class AssignRowsAndColumnsToMergeStrategy  extends AbstractMergeStrategy 
                 sheet.addMergedRegion(item);
             }
         }
-
-        /*
-         * 如果不作判断，可以使用addMergedRegionUnsafe()方法，
-         * 这样生成的Excel文件可以打开，只是打开时会提示内容有问题，修复后可以打开
-         */
-        // for (CellRangeAddress item : cellRangeAddresses) {
-        //     sheet.addMergedRegionUnsafe(item);
-        // }
     }
 }
