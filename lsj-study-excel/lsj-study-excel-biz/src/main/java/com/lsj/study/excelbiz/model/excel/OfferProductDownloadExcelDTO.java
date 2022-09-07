@@ -1,22 +1,17 @@
-package com.lsj.study.excelbiz.model.quote;
+package com.lsj.study.excelbiz.model.excel;
 
 import lombok.Data;
 
 import java.util.List;
 
 /**
- * QuoteProductExcel
+ * OfferProductDownload
  *
  * @author by lishangj
- * @date 2022/9/6 15:37
+ * @date 2022/9/7 15:51
  */
 @Data
-public class QuoteProductExcel {
-
-    /**
-     * 序号.
-     */
-    private Integer index;
+public class OfferProductDownloadExcelDTO {
 
     /**
      * 渠道.
@@ -24,7 +19,7 @@ public class QuoteProductExcel {
     private String channel;
 
     /**
-     * 国家.
+     * 国家/分区.
      */
     private String countries;
 
@@ -41,7 +36,7 @@ public class QuoteProductExcel {
     /**
      * 销售区域.
      */
-    private String salesArea;
+    private String region;
 
     /**
      * 时效.
@@ -56,5 +51,5 @@ public class QuoteProductExcel {
     /**
      * 产品详情.
      */
-    private List<QuoteProductDetailExcel> productDetailList;
+    private List<OfferProductDetailExcelDownloadDTO> productDetailList;
 }

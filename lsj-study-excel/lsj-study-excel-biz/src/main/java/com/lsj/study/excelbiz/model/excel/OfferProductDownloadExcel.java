@@ -1,18 +1,18 @@
-package com.lsj.study.excelbiz.model.quote;
+package com.lsj.study.excelbiz.model.excel;
 
+import com.lsj.study.excelbiz.model.quote.QuoteProductDetailExcel;
 import lombok.Data;
 
 import java.util.List;
 
 /**
- * QuoteProductExcel
+ * OfferProductDownload
  *
  * @author by lishangj
- * @date 2022/9/6 15:37
+ * @date 2022/9/7 15:51
  */
 @Data
-public class QuoteProductExcel {
-
+public class OfferProductDownloadExcel {
     /**
      * 序号.
      */
@@ -41,7 +41,7 @@ public class QuoteProductExcel {
     /**
      * 销售区域.
      */
-    private String salesArea;
+    private String region;
 
     /**
      * 时效.
