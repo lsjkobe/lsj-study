@@ -40,7 +40,7 @@ public class DemoFillMain {
 
     public static void main(String[] args) throws IOException {
         // 模板注意 用{} 来表示你要用的变量 如果本来就有"{","}" 特殊字符 用"\{","\}"代替
-        String templateFileName = "H:\\lsj\\workspace\\lsj\\lsj-study\\lsj-study-excel\\lsj-study-excel-biz\\src\\main\\resources\\temp\\excel/联邮通报价模板_2.xlsx";
+        String templateFileName = "H:\\lsj\\workspace\\lsj\\lsj-study\\lsj-study-excel\\lsj-study-excel-biz\\src\\main\\resources\\temp\\excel/联邮通报价模板.xlsx";
         QuoteDownloadExcel quoteDownloadExcel = initData();
         quoteDownloadExcel.setVatRateIndex(quoteDownloadExcel.getQuoteProductExcelList().size() + 1);
         ExcelWriter excelWriter = buildExcelWriter(new FileInputStream(templateFileName), quoteDownloadExcel.getQuoteProductExcelList());
