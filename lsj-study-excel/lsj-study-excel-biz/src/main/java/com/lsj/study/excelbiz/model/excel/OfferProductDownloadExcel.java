@@ -53,6 +53,11 @@ public class OfferProductDownloadExcel {
     private String desc;
 
     /**
+     * 超链接.
+     */
+    private String hyperlink = "点击进入";
+
+    /**
      * 产品详情.
      */
     private List<OfferProductDetailDownloadExcel> productDetailList;

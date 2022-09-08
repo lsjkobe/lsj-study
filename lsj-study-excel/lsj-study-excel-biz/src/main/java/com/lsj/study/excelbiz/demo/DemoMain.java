@@ -1,11 +1,15 @@
 package com.lsj.study.excelbiz.demo;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.context.AnalysisContext;
+import com.alibaba.excel.read.listener.ModelBuildEventListener;
+import com.alibaba.excel.read.listener.ReadListener;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DemoMain .
@@ -23,22 +27,24 @@ public class DemoMain {
 //                .registerWriteHandler(new ExcelMergeHandler(2, new int[]{0, 1, 2, 3, 5, 8, 9}))
 //                .sheet("Sheet1")
 //                .doWrite(data());
+//
+//        // 合并策略：指定要合并的行列范围
+//        int[][] toMergeRows = {{2, 3}, {4, 6}};
+//        int[] toMergeColumns = {0, 1, 2, 3, 8, 9};
+//        List<CellRangeAddress> list = new ArrayList<>();
+//        for (int[] toMergeRow : toMergeRows) {
+//            for (int toMergeColumn : toMergeColumns) {
+//                list.add(new CellRangeAddress(toMergeRow[0], toMergeRow[1], toMergeColumn, toMergeColumn));
+//            }
+//        }
+//
+//        EasyExcel.write(fileName)
+//                .head(header())
+//                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(2, list))
+//                .sheet("模板")
+//                .doWrite(data());
 
-        // 合并策略：指定要合并的行列范围
-        int[][] toMergeRows = {{2, 3}, {4, 6}};
-        int[] toMergeColumns = {0, 1, 2, 3, 8, 9};
-        List<CellRangeAddress> list = new ArrayList<>();
-        for (int[] toMergeRow : toMergeRows) {
-            for (int toMergeColumn : toMergeColumns) {
-                list.add(new CellRangeAddress(toMergeRow[0], toMergeRow[1], toMergeColumn, toMergeColumn));
-            }
-        }
-
-        EasyExcel.write(fileName)
-                .head(header())
-                .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(2, list))
-                .sheet("模板")
-                .doWrite(data());
+        EasyExcel.read("C:\\Users\\lishangj\\Desktop\\lsj\\联邮通报价下载模板.xlsx", new ModelBuildEventListener()).doReadAll();
     }
 
     /**

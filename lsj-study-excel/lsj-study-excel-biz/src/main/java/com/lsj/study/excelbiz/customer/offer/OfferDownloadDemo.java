@@ -14,9 +14,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * OfferDownloadDemo
@@ -40,9 +38,19 @@ public class OfferDownloadDemo {
     private static final int PRODUCT_SHEET_START_INDEX = 2;
 
     /**
+     * 价格表目录列表开始行数
+     */
+    private static final int PRICE_LIST_ROW_START_INDEX = 5;
+
+    /**
      * 产品详情列表开始行数
      */
     private static final int PRODUCT_ROW_START_INDEX = 5;
+
+    /**
+     * 超链接在第几列
+     */
+    private static final int HYPERLINK_COLUMN_INDEX = 7;
 
     // 方案1 根据对象填充
     static String fileName = "F:\\tmp\\excel/lsjtest/fill/" + System.currentTimeMillis() + ".xlsx";
@@ -105,7 +113,17 @@ public class OfferDownloadDemo {
      */
     private static void fillBaseSheetData(ExcelWriter excelWriter, OfferDownloadExcel offerDownloadExcel,
                                           List<OfferProductDownloadExcel> productDownloadExcelList) {
-        WriteSheet writeSheet = EasyExcel.writerSheet("价格表目录").build();
+        //行列index拼接字符串与超链接地址的map
+        Map<String, String> hyperlinkDataMap = new HashMap<>();
+        for (int i = 0; i < productDownloadExcelList.size(); i++) {
+            int rowIndex = PRICE_LIST_ROW_START_INDEX - 1 + i;
+            String sheetName = genSheetName(productDownloadExcelList.get(i));
+            String rowColumnSplicing = HyperlinkCellWriteHandler.genRowColumnSplicing(rowIndex, HYPERLINK_COLUMN_INDEX);
+            hyperlinkDataMap.put(rowColumnSplicing, sheetName);
+        }
+        WriteSheet writeSheet = EasyExcel.writerSheet("价格表目录")
+                .registerWriteHandler(new HyperlinkCellWriteHandler(hyperlinkDataMap))
+                .build();
         excelWriter.fill(offerDownloadExcel, writeSheet);
         FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
         excelWriter.fill(productDownloadExcelList, fillConfig, writeSheet);
