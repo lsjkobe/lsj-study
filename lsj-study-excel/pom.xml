@@ -10,6 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>lsj-study-excel-biz</module>
+        <module>lsj-study-offer/lsj-study-offer</module>
     </modules>
 
     <properties>

@@ -3,11 +3,12 @@ package com.lsj.study.excelbiz.customer;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.write.style.row.SimpleRowHeightStyleStrategy;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.lsj.study.excelbiz.demo.AssignRowsAndColumnsToMergeStrategy;
-import com.lsj.study.excelbiz.model.Customer;
-import com.lsj.study.excelbiz.model.CustomerExcel;
-import com.lsj.study.excelbiz.model.Product;
-import com.lsj.study.excelbiz.model.ProductDetail;
+import com.lsj.study.excelbiz.model.OfferCustomerExcel;
+import com.lsj.study.excelbiz.model.OfferBuildExcel;
+import com.lsj.study.excelbiz.model.OfferProductExcel;
+import com.lsj.study.excelbiz.model.OfferProductDetailExcel;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -23,24 +24,24 @@ import java.util.*;
 @Slf4j
 public class CustomerDemo {
 
-    private static String fileName = "F:\\tmp\\excel/lsjtest/" + System.currentTimeMillis() + ".xlsx";
+    private static String fileName = "D:/tmp/excel/build/" + System.currentTimeMillis() + ".xlsx";
 
     public static void main(String[] args) {
-        List<Customer> customerList = initData2();
+        List<OfferCustomerExcel> offerCustomerExcelList = initData();
         Gson gson = new Gson();
-        log.info("初始化数据：{}", gson.toJson(customerList));
-        List<CustomerExcel> customerExcelList = new ArrayList<>();
+        log.info("初始化数据：{}", gson.toJson(offerCustomerExcelList));
+        List<OfferBuildExcel> offerBuildExcelList = new ArrayList<>();
         List<CellRangeAddress> cellRangeAddressList = new ArrayList<>();
         int startRow = 2;
-        toExcelData(startRow, customerList, customerExcelList, cellRangeAddressList);
+        toExcelData(startRow, offerCustomerExcelList, offerBuildExcelList, cellRangeAddressList);
         log.info("");
         EasyExcel.write(fileName)
-                .head(CustomerExcel.class)
+                .head(OfferBuildExcel.class)
                 .registerWriteHandler(new SimpleRowHeightStyleStrategy((short) 20, (short) 17))
                 .registerWriteHandler(new HeadCellStyleStrategy())
                 .registerWriteHandler(new AssignRowsAndColumnsToMergeStrategy(startRow, cellRangeAddressList))
                 .sheet("模板")
-                .doWrite(customerExcelList);
+                .doWrite(offerBuildExcelList);
     }
 
     /**
@@ -48,12 +49,12 @@ public class CustomerDemo {
      * 转为excel导出需要的数据.
      *
      * @param startRowCount        开始的行号
-     * @param customerList         客户对象列表
-     * @param customerExcelList    返回的excel对象列表
+     * @param offerCustomerExcelList         客户对象列表
+     * @param offerBuildExcelList    返回的excel对象列表
      * @param cellRangeAddressList 合并的对象列表
      */
-    private static void toExcelData(int startRowCount, List<Customer> customerList,
-                                    List<CustomerExcel> customerExcelList, List<CellRangeAddress> cellRangeAddressList) {
+    private static void toExcelData(int startRowCount, List<OfferCustomerExcel> offerCustomerExcelList,
+                                    List<OfferBuildExcel> offerBuildExcelList, List<CellRangeAddress> cellRangeAddressList) {
         //一层合并字段的列范围，1-9列
         int[] customerMergeColSegment = {0, 8};
         //二级合并字段的列范围，10-11列
@@ -61,32 +62,32 @@ public class CustomerDemo {
         //定义当前行数
         int curStartRow = startRowCount;
         //遍历客户信息列表
-        for (Customer customer : customerList) {
+        for (OfferCustomerExcel offerCustomerExcel : offerCustomerExcelList) {
             //重置当前客户的行数
             int customerRowCount = 0;
             int curProductStartRow = curStartRow;
-            if (CollectionUtils.isEmpty(customer.getProductList())) {
+            if (CollectionUtils.isEmpty(offerCustomerExcel.getProductList())) {
                 continue;
             }
             //遍历客户下产品列表
-            for (Product product : customer.getProductList()) {
+            for (OfferProductExcel offerProductExcel : offerCustomerExcel.getProductList()) {
                 int productRowCount;
-                if (CollectionUtils.isEmpty(product.getProductDetailList())) {
+                if (CollectionUtils.isEmpty(offerProductExcel.getProductDetailList())) {
                     continue;
                 }
                 //遍历产品下的具体详情列表
-                for (ProductDetail productDetail : product.getProductDetailList()) {
-                    CustomerExcel customerExcel = toCustomerExcel(customer, product, productDetail);
-                    customerExcelList.add(customerExcel);
+                for (OfferProductDetailExcel offerProductDetailExcel : offerProductExcel.getProductDetailList()) {
+                    OfferBuildExcel offerBuildExcel = toCustomerExcel(offerCustomerExcel, offerProductExcel, offerProductDetailExcel);
+                    offerBuildExcelList.add(offerBuildExcel);
                 }
-                productRowCount = product.getProductDetailList().size();
+                productRowCount = offerProductExcel.getProductDetailList().size();
                 //构造二层（产品）合并的合并对象
                 List<CellRangeAddress> productCellRangeAddressList = genCellRangeAddress(productMergeColSegment, curProductStartRow, productRowCount);
                 cellRangeAddressList.addAll(productCellRangeAddressList);
                 //当前产品开始行数+产品占的行数=下一产品开始行数
                 curProductStartRow = curProductStartRow + productRowCount;
                 //当前客户所占行数=每个产品的产品详情数量累加
-                customerRowCount += product.getProductDetailList().size();
+                customerRowCount += offerProductExcel.getProductDetailList().size();
             }
             //构造一层（客户）合并的合并对象
             List<CellRangeAddress> customerCellRangeAddressList = genCellRangeAddress(customerMergeColSegment, curStartRow, customerRowCount);
@@ -122,184 +123,45 @@ public class CustomerDemo {
     /**
      * 创建excel对象.
      *
-     * @param customer      客户信息.
-     * @param product       客户产品信息.
-     * @param productDetail 产品详情.
+     * @param offerCustomerExcel      客户信息.
+     * @param offerProductExcel       客户产品信息.
+     * @param offerProductDetailExcel 产品详情.
      * @return .
      */
-    private static CustomerExcel toCustomerExcel(Customer customer, Product product, ProductDetail productDetail) {
-        CustomerExcel customerExcel = new CustomerExcel();
-        customerExcel.setCode(customer.getCode());
-        customerExcel.setName(customer.getName());
-        customerExcel.setLevel(customer.getLevel());
-        customerExcel.setRecentShipments(customer.getRecentShipments());
-        customerExcel.setRecentBubbleRatio(customer.getRecentBubbleRatio());
-        customerExcel.setBranch(customer.getBranch());
-        customerExcel.setFsSales(customer.getFsSales());
-        customerExcel.setPriceType(customer.getPriceType());
-        customerExcel.setApplicationTime(customer.getApplicationTime());
+    private static OfferBuildExcel toCustomerExcel(OfferCustomerExcel offerCustomerExcel, OfferProductExcel offerProductExcel, OfferProductDetailExcel offerProductDetailExcel) {
+        OfferBuildExcel offerBuildExcel = new OfferBuildExcel();
+        offerBuildExcel.setCustomerCode(offerCustomerExcel.getCustomerCode());
+        offerBuildExcel.setCustomerName(offerCustomerExcel.getCustomerName());
+        offerBuildExcel.setCustomerLevel(offerCustomerExcel.getCustomerLevel());
+        offerBuildExcel.setLastThirtyQuantity(offerCustomerExcel.getLastThirtyQuantity());
+        offerBuildExcel.setLastThirtyRatioPucker(offerCustomerExcel.getLastThirtyRatioPucker());
+        offerBuildExcel.setOrgDesc(offerCustomerExcel.getOrgDesc());
+        offerBuildExcel.setFsTraceName(offerCustomerExcel.getFsTraceName());
+        offerBuildExcel.setQuotationType(offerCustomerExcel.getQuotationType());
+        offerBuildExcel.setValidityDay(offerCustomerExcel.getValidityDay());
 
-        customerExcel.setProductName(product.getName());
-        customerExcel.setProductSalesArea(product.getSalesArea());
+        offerBuildExcel.setProductName(offerProductExcel.getProductName());
+        offerBuildExcel.setRegion(offerProductExcel.getRegion());
 
-        customerExcel.setCountry(productDetail.getCountry());
-        customerExcel.setWeightSegment(productDetail.getWeightSegment());
-        customerExcel.setPublishedExpressShipping(productDetail.getPublishedExpressShipping());
-        customerExcel.setPublishedRegistrationFee(productDetail.getPublishedRegistrationFee());
-        customerExcel.setExpressShipping(productDetail.getExpressShipping());
-        customerExcel.setRegistrationFee(productDetail.getRegistrationFee());
-        customerExcel.setValidityPeriod(productDetail.getValidityPeriod());
-        customerExcel.setApplyExpressShipping(productDetail.getApplyExpressShipping());
-        customerExcel.setApplyRegistrationFee(productDetail.getApplyRegistrationFee());
-        customerExcel.setComparativeExpressShipping(productDetail.getComparativeExpressShipping());
-        customerExcel.setComparativeRegistrationFee(productDetail.getComparativeRegistrationFee());
-        customerExcel.setCommitmentDailyVolume(productDetail.getCommitmentDailyVolume());
-        customerExcel.setAverageTicketWeight(productDetail.getAverageTicketWeight());
-        return customerExcel;
+        offerBuildExcel.setCountry(offerProductDetailExcel.getCountry());
+        offerBuildExcel.setWeightSegment(offerProductDetailExcel.getWeightSegment());
+        offerBuildExcel.setPublishedExpressFreight(offerProductDetailExcel.getPublishedExpressFreight());
+        offerBuildExcel.setPublishedRegistrationFee(offerProductDetailExcel.getPublishedRegistrationFee());
+        offerBuildExcel.setAgreementExpressFreight(offerProductDetailExcel.getAgreementExpressFreight());
+        offerBuildExcel.setAgreementRegistrationFee(offerProductDetailExcel.getAgreementRegistrationFee());
+        offerBuildExcel.setAgreementDatePeriod(offerProductDetailExcel.getAgreementDatePeriod());
+        offerBuildExcel.setApplyExpressFreight(offerProductDetailExcel.getApplyExpressFreight());
+        offerBuildExcel.setApplyRegistrationFee(offerProductDetailExcel.getApplyRegistrationFee());
+        offerBuildExcel.setPublishedExpressFellFreight(offerProductDetailExcel.getPublishedExpressFellFreight());
+        offerBuildExcel.setPublishedRegistrationFellFee(offerProductDetailExcel.getPublishedRegistrationFellFee());
+        offerBuildExcel.setDailyAvgGoods(offerProductDetailExcel.getDailyAvgGoods());
+        offerBuildExcel.setDailyAvgWeight(offerProductDetailExcel.getDailyAvgWeight());
+        return offerBuildExcel;
     }
 
-    private static List<Customer> initData2() {
-        List<Customer> customerList = new ArrayList<>();
-        Customer customer1 = genCustomer1("张三", "QWE121");
-        Customer customer2 = genCustomer2("李四", "QW321");
-        customerList.add(customer1);
-        customerList.add(customer2);
-        return customerList;
+    private static List<OfferCustomerExcel> initData() {
+        return new Gson().fromJson(DATA_JSON, new TypeToken<List<OfferCustomerExcel>>() {}.getType());
     }
 
-    private static Customer genCustomer1(String name, String code) {
-        List<Product> productList = new ArrayList<>();
-        productList.add(genProduct1());
-        productList.add(genProduct2());
-        return Customer.builder()
-                .name(name)
-                .code(code)
-                .level("大型客户")
-                .fsSales("王五")
-                .branch("广州分公司")
-                .recentShipments(300)
-                .recentBubbleRatio("1.2")
-                .priceType("等级价1档")
-                .applicationTime("30天")
-                .productList(productList)
-                .build();
-    }
-
-    private static Customer genCustomer2(String name, String code) {
-        List<Product> productList = new ArrayList<>();
-        productList.add(genProduct1());
-        productList.add(genProduct2());
-        return Customer.builder()
-                .name(name)
-                .code(code)
-                .level("大型客户")
-                .fsSales("王五")
-                .branch("广州分公司")
-                .recentShipments(300)
-                .recentBubbleRatio("1.2")
-                .priceType("等级价1档")
-                .applicationTime("30天")
-                .productList(productList)
-                .build();
-    }
-
-    private static Product genProduct1() {
-        List<ProductDetail> productDetailList = new ArrayList<>();
-        productDetailList.add(genProductDetail("0-100G", "美国", 45, 50));
-        productDetailList.add(genProductDetail("101-200G", "美国", 46, 150));
-        productDetailList.add(genProductDetail("201-450G", "美国", 47, 250));
-        productDetailList.add(genProductDetail("451-700G", "美国", 48, 550));
-        return Product.builder()
-                .name("联邮通经济挂号-普货")
-                .salesArea("华南")
-                .productDetailList(productDetailList)
-                .build();
-    }
-
-    private static Product genProduct2() {
-        List<ProductDetail> productDetailList = new ArrayList<>();
-        productDetailList.add(genProductDetail("701-1000G", "美国", 49, 850));
-        productDetailList.add(genProductDetail("1001-3000G", "美国", 50, 1550));
-        productDetailList.add(genProductDetail("0-100G", "英国", 51, 850));
-        productDetailList.add(genProductDetail("101-200G", "英国", 52, 1550));
-        return Product.builder()
-                .name("联邮通经济挂号-带电")
-                .salesArea("华南")
-                .productDetailList(productDetailList)
-                .build();
-    }
-
-
-    private static ProductDetail genProductDetail(String weightSegment, String country, int commitmentDailyVolume, int averageTicketWeight) {
-        return ProductDetail.builder()
-                .country(country)
-                .weightSegment(weightSegment)
-                .publishedExpressShipping("66")
-                .publishedRegistrationFee("14")
-                .expressShipping("65")
-                .registrationFee("13")
-                .validityPeriod("2020-09-09—2020-09-10")
-                .applyExpressShipping("66")
-                .applyRegistrationFee("14")
-                .comparativeExpressShipping("下降1元")
-                .comparativeRegistrationFee("下降1元")
-                .commitmentDailyVolume(commitmentDailyVolume)
-                .averageTicketWeight(averageTicketWeight)
-                .build();
-    }
-
-
-    private static List<Customer> initData() {
-        String comontStr = "lsj";
-        String productNameStr = "产品";
-        List<Customer> customerList = new ArrayList<>();
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            Customer.CustomerBuilder customerBuilder = Customer.builder()
-                    .name(comontStr + i)
-                    .code(UUID.randomUUID().toString())
-                    .branch(comontStr + "-" + i + "公司")
-                    .applicationTime(new Date().toString())
-                    .fsSales("lsj")
-                    .level("1")
-                    .recentShipments(random.nextInt(30))
-                    .recentBubbleRatio(String.valueOf(random.nextInt(30)))
-                    .priceType("1");
-            List<Product> productList = new ArrayList<>();
-            customerBuilder.productList(productList);
-            int productCount = random.nextInt(5);
-            for (int j = 0; j < productCount; j++) {
-                List<ProductDetail> productDetailList = new ArrayList<>();
-                Product product = Product.builder()
-                        .name(productNameStr + j)
-                        .salesArea("华南")
-                        .productDetailList(productDetailList)
-                        .build();
-                productList.add(product);
-                int detailCount = random.nextInt(8);
-                for (int k = 0; k < detailCount; k++) {
-                    int weight = (k + 1) * 100;
-                    ProductDetail productDetail = ProductDetail.builder()
-                            .country("俄罗斯")
-                            .weightSegment("0-100G")
-                            .publishedExpressShipping("66")
-                            .publishedRegistrationFee("14")
-                            .expressShipping("65")
-                            .registrationFee("13")
-                            .validityPeriod("2020-09-09—2020-09-10")
-                            .applyExpressShipping("66")
-                            .applyRegistrationFee("14")
-                            .comparativeExpressShipping("下降1元")
-                            .comparativeRegistrationFee("下降1元")
-                            .commitmentDailyVolume(100)
-                            .averageTicketWeight(50)
-                            .build();
-                    productDetailList.add(productDetail);
-                }
-            }
-            Customer customer = customerBuilder.build();
-            customerList.add(customer);
-        }
-        return customerList;
-    }
+    private static final String DATA_JSON = "[{\"customerName\":\"张三\",\"customerCode\":\"QWE121\",\"customerLevel\":\"大型客户\",\"fsTraceName\":\"王五\",\"orgDesc\":\"广州分公司\",\"lastThirtyQuantity\":300,\"lastThirtyRatioPucker\":1.2,\"quotationType\":\"等级价1档\",\"validityDay\":\"30天\",\"productList\":[{\"productName\":\"联邮通经济挂号-普货\",\"region\":\"华南\",\"productDetailList\":[{\"country\":\"美国\",\"weightSegment\":\"0-100G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":45,\"dailyAvgWeight\":50},{\"country\":\"美国\",\"weightSegment\":\"101-200G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":46,\"dailyAvgWeight\":150},{\"country\":\"美国\",\"weightSegment\":\"201-450G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":47,\"dailyAvgWeight\":250},{\"country\":\"美国\",\"weightSegment\":\"451-700G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":48,\"dailyAvgWeight\":550}]},{\"productName\":\"联邮通经济挂号-带电\",\"region\":\"华南\",\"productDetailList\":[{\"country\":\"美国\",\"weightSegment\":\"701-1000G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":49,\"dailyAvgWeight\":850},{\"country\":\"美国\",\"weightSegment\":\"1001-3000G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":50,\"dailyAvgWeight\":1550},{\"country\":\"英国\",\"weightSegment\":\"0-100G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":51,\"dailyAvgWeight\":850},{\"country\":\"英国\",\"weightSegment\":\"101-200G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":52,\"dailyAvgWeight\":1550}]}]},{\"customerName\":\"李四\",\"customerCode\":\"QW321\",\"customerLevel\":\"大型客户\",\"fsTraceName\":\"王五\",\"orgDesc\":\"广州分公司\",\"lastThirtyQuantity\":300,\"lastThirtyRatioPucker\":1.2,\"quotationType\":\"等级价1档\",\"validityDay\":\"30天\",\"productList\":[{\"productName\":\"联邮通经济挂号-普货\",\"region\":\"华南\",\"productDetailList\":[{\"country\":\"美国\",\"weightSegment\":\"0-100G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":45,\"dailyAvgWeight\":50},{\"country\":\"美国\",\"weightSegment\":\"101-200G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":46,\"dailyAvgWeight\":150},{\"country\":\"美国\",\"weightSegment\":\"201-450G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":47,\"dailyAvgWeight\":250},{\"country\":\"美国\",\"weightSegment\":\"451-700G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":48,\"dailyAvgWeight\":550}]},{\"productName\":\"联邮通经济挂号-带电\",\"region\":\"华南\",\"productDetailList\":[{\"country\":\"美国\",\"weightSegment\":\"701-1000G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":49,\"dailyAvgWeight\":850},{\"country\":\"美国\",\"weightSegment\":\"1001-3000G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":50,\"dailyAvgWeight\":1550},{\"country\":\"英国\",\"weightSegment\":\"0-100G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":51,\"dailyAvgWeight\":850},{\"country\":\"英国\",\"weightSegment\":\"101-200G\",\"publishedExpressFreight\":66,\"publishedRegistrationFee\":14,\"agreementExpressFreight\":65,\"agreementRegistrationFee\":13,\"agreementDatePeriod\":\"2020-09-09—2020-09-10\",\"applyExpressFreight\":66,\"applyRegistrationFee\":14,\"publishedExpressFellFreight\":\"下降1元\",\"publishedRegistrationFellFee\":\"下降1元\",\"dailyAvgGoods\":52,\"dailyAvgWeight\":1550}]}]}]";
 }
