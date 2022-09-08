@@ -8,7 +8,7 @@ import com.alibaba.excel.write.metadata.fill.FillConfig;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.lsj.study.excelbiz.demo.AssignRowsAndColumnsToMergeStrategy;
-import com.lsj.study.excelbiz.model.excel.*;
+import com.lsj.study.excelbiz.model.excel.download.*;
 import com.lsj.study.excelbiz.utils.BeanCopierUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.util.CellRangeAddress;

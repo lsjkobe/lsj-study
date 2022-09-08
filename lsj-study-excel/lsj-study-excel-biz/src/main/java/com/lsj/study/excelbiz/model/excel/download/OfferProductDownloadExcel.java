@@ -1,4 +1,4 @@
-package com.lsj.study.excelbiz.model.excel;
+package com.lsj.study.excelbiz.model.excel.download;
 
 import lombok.Data;
 
@@ -11,7 +11,11 @@ import java.util.List;
  * @date 2022/9/7 15:51
  */
 @Data
-public class OfferProductDownloadExcelDTO {
+public class OfferProductDownloadExcel {
+    /**
+     * 序号.
+     */
+    private Integer index;
 
     /**
      * 渠道.
@@ -19,7 +23,7 @@ public class OfferProductDownloadExcelDTO {
     private String channel;
 
     /**
-     * 国家/分区.
+     * 国家.
      */
     private String countries;
 
@@ -49,7 +53,12 @@ public class OfferProductDownloadExcelDTO {
     private String desc;
 
     /**
+     * 超链接.
+     */
+    private String hyperlink = "点击进入";
+
+    /**
      * 产品详情.
      */
-    private List<OfferProductDetailDownloadExcelDTO> productDetailList;
+    private List<OfferProductDetailDownloadExcel> productDetailList;
 }

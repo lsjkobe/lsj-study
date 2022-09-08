@@ -1,4 +1,4 @@
-package com.lsj.study.excelbiz.model.excel;
+package com.lsj.study.excelbiz.model.excel.download;
 import lombok.Data;
 
 /**
