@@ -16,7 +16,7 @@ public class OfferProductDetailDownloadExcel {
     private Integer index;
 
     /**
-     * 国家.
+     * 国家/地区.
      */
     private String country;
 
