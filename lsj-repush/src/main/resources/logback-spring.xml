@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 定义日志文件 输入位置 -->
+    <property name="log_dir" value="/root/lsj-repush2/logs/" />
+    <!-- 日志最大的历史 30天 -->
+    <property name="maxHistory" value="30" />
+    <property name="APP_NAME" value="lsj-repush2" />
+
+    <!-- 控制台输出 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss} %thread %-5level [%X{MDC_Trace_Id}] %logger{36}.%M %line %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
+    <!-- info log 文件输出 -->
+    <appender name="infofile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${log_dir}/info/info.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log_dir}/info/info.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>${maxHistory}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{MDC_Trace_Id}] %logger[%M] - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+    </appender>
+
+    <!-- error log 文件输出 -->
+    <appender name="errorfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${log_dir}/error/error.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log_dir}/error/error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>${maxHistory}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{MDC_Trace_Id}] %logger[%M] - %msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>error</level>
+        </filter>
+    </appender>
+
+    <appender name="appender-metrics-log" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log_dir}/metrics.log</file>
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS}|${APP_NAME}|%X{MDC_Trace_Id}|%replace(%message){'\n', '\\n'}%n%nopex</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log_dir}/metrics.log.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>1</maxHistory>
+            <maxFileSize>50MB</maxFileSize>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="async-appender-metrics-log" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="appender-metrics-log"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <maxFlushTime>60000</maxFlushTime>
+    </appender>
+
+    <logger name="metrics" level="INFO" additivity="false">
+        <appender-ref ref="console"/>
+        <appender-ref ref="async-appender-metrics-log"/>
+    </logger>
+
+
+    <root level="debug">
+        <appender-ref ref="console"/>
+        <appender-ref ref="infofile"/>
+        <appender-ref ref="errorfile" />
+    </root>
+</configuration>
