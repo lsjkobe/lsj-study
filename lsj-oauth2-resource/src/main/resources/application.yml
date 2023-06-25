@@ -1,0 +1,9 @@
+server:
+  port: 5050
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://127.0.0.1:8602/oauth2/jwks

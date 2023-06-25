@@ -1,0 +1,27 @@
+server:
+  port: 5050
+
+spring:
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  security:
+    oauth2:
+      client:
+        registration:
+          login-client:
+            provider: login-client
+            client-id: login-client
+            client-secret: openid-connect
+            authorization-grant-type: authorization_code
+            redirect-uri: 'http://127.0.0.1:8602/code'
+            #            client-authentication-method: POST
+            scope: test
+            client-name: login-client
+        provider:
+          login-client:
+            authorization-uri: http://127.0.0.1:8602/oauth2/authorize
+            token-uri: http://127.0.0.1:8602/oauth2/token
+            user-info-uri: http://127.0.0.1:8602/user/info
+            user-name-attribute: name
+            jwk-set-uri: http://127.0.0.1:8602/oauth2/jwks
